@@ -16,6 +16,11 @@ contract Raffle is VRFConsumerBaseV2 {
     error Raffle__NotEnoughFunds();
     error Raffle__TransferFailed();
     error Raffle__NotOpen();
+    error Raffle__UpkeepNotNeeded(
+        uint256 balance,
+        uint256 participants,
+        uint256 raffleState
+    );
 
     /** Type Declaration*/
     enum RaffleState {
@@ -72,21 +77,69 @@ contract Raffle is VRFConsumerBaseV2 {
         emit EnteredRaffle(msg.sender);
     }
 
-    function pickWinner() external {
-        if (block.timestamp - s_lastTimeStamp >= i_interval) {
-            revert();
-            // Pick a random winner
-            // Transfer the money to the winner
-            // Reset the participants
+    /**
+     * @dev This function is used to check the upkeep of the contract
+     * Conition required for upkeep
+     * 1. Time interval has passed between the last raffle
+     * 2. Raffle state is in OPEN state
+     * 3. The cintract has enough LINK to pay for the VRF
+     * 4. Contract is ETH
+     */
+    function checkUpkeep(
+        bytes memory /**checkData*/
+    ) public view returns (bool upKeepNeeded, bytes memory) {
+        // return (s_RaffleState == RaffleState.CALCULATING, checkData);
+        bool timehaspassed = block.timestamp - s_lastTimeStamp > i_interval;
+        bool raffleOpen = s_RaffleState == RaffleState.OPEN;
+        bool enoughFunds = address(this).balance > 0;
+        bool hasPlayers = s_participants.length > 0;
+        upKeepNeeded = (timehaspassed &&
+            raffleOpen &&
+            enoughFunds &&
+            hasPlayers);
+        return (upKeepNeeded, "0x0");
+    }
+
+    // function pickWinner() external {
+    //     if (block.timestamp - s_lastTimeStamp >= i_interval) {
+    //         revert();
+    //         // Pick a random winner
+    //         // Transfer the money to the winner
+    //         // Reset the participants
+    //     }
+    //     s_RaffleState = RaffleState.CALCULATING;
+    //     uint256 requestId = i_vrfCoordinator.requestRandomWords(
+    //         i_gasLane,
+    //         i_subscriptionId,
+    //         REQUEST_CONFIRMATIONS,
+    //         i_callbackGasLimit,
+    //         NUMWORDS
+    //     );
+    // }
+
+    function performUpkeep(bytes calldata) external {
+        (bool upkeepNeeded, ) = checkUpkeep("");
+        if (!upkeepNeeded) {
+            revert Raffle__UpkeepNotNeeded(
+                address(this).balance,
+                s_participants.length,
+                uint256(s_RaffleState)
+            );
         }
+        // if (block.timestamp - s_lastTimeStamp >= i_interval) {
+        //     revert();
+        //     // Pick a random winner
+        //     // Transfer the money to the winner
+        //     // Reset the participants
+        // }
         s_RaffleState = RaffleState.CALCULATING;
-        uint256 requestId = i_vrfCoordinator.requestRandomWords(
-            i_gasLane,
-            i_subscriptionId,
-            REQUEST_CONFIRMATIONS,
-            i_callbackGasLimit,
-            NUMWORDS
-        );
+        // uint256 requestId = i_vrfCoordinator.requestRandomWords(
+        //     i_gasLane,
+        //     i_subscriptionId,
+        //     REQUEST_CONFIRMATIONS,
+        //     i_callbackGasLimit,
+        //     NUMWORDS
+        // );
     }
 
     /** Getter Function */
@@ -96,7 +149,7 @@ contract Raffle is VRFConsumerBaseV2 {
     }
 
     function fulfillRandomWords(
-        uint256 _requestId,
+        uint256 /**_requestId*/,
         uint256[] memory _randomWords
     ) internal override {
         uint256 randomIndex = _randomWords[0] % s_participants.length;
