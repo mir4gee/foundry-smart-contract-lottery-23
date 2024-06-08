@@ -61,7 +61,7 @@ contract RaffleTest is Test {
 
     function testRaffleRevertsWhenNotOpen() public {
         vm.prank(PLAYER);
-        raffle.enter({value: entranceFee});
+        raffle.enter{value: entranceFee}();
         vm.expectRevert(Raffle.Raffle__NotOpen.selector);
     }
 
