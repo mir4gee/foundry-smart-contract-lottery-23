@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {Script} from "forge-std/Script.sol";
 import {VRFCoordinatorV2Mock} from "lib/chainlink-brownie-contracts/contracts/src/v0.8/mocks/VRFCoordinatorV2Mock.sol";
+import {LinkToken} from "test/unit/RaffleTest.t.sol";
 
 contract HelperConfig is Script {
     struct NetworkConfig {
@@ -36,11 +37,8 @@ contract HelperConfig is Script {
             });
     }
 
-    function getOrCreateAnvilConfig()
-        public
-        returns (NetworkConfig memory)
-    {
-        if(ActiveConfig.vrfCoordinator != address(0)){
+    function getOrCreateAnvilConfig() public returns (NetworkConfig memory) {
+        if (ActiveConfig.vrfCoordinator != address(0)) {
             return ActiveConfig;
         }
 
@@ -55,13 +53,14 @@ contract HelperConfig is Script {
 
         vm.stopBroadcast();
 
-        return NetworkConfig({
-            entranceFee: 0.01 ether,
-            interval: 30,
-            vrfCoordinator: address(vrfCoordinator),
-            gasLane: 0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
-            subscriptionId: 0,
-            callbackGasLimit: 500000
-        });
+        return
+            NetworkConfig({
+                entranceFee: 0.01 ether,
+                interval: 30,
+                vrfCoordinator: address(vrfCoordinator),
+                gasLane: 0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
+                subscriptionId: 0,
+                callbackGasLimit: 500000
+            });
     }
 }
