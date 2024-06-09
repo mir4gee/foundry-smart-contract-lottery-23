@@ -40,5 +40,5 @@ contract CreateSubscription is Script {
 contract FundSubscription is Script{
     uint96 public constant FUND_AMOUNT = 3 ether;
 
-    function run() 
+    function run() public {}
 }
